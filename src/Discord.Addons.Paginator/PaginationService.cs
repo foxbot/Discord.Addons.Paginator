@@ -26,7 +26,14 @@ namespace Discord.Addons.Paginator
             _client.ReactionAdded += OnReactionAdded;
         }
 
-        public async Task SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages)
+        /// <summary>
+        /// Sends a paginated message (with reaction buttons)
+        /// </summary>
+        /// <param name="channel">The channel the message should be sent to.</param>
+        /// <param name="pages">A collection of pages to send to the channel. Each element in this collection represents one page.</param>
+        /// <exception cref="Net.HttpException">Thrown if the bot user cannot send a message or add reactions.</exception>
+        /// <returns>The paginated message.</returns>
+        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages)
         {
             var paginated = new PaginatedMessage(pages);
 
@@ -41,9 +48,11 @@ namespace Discord.Addons.Paginator
             //await message.AddReactionAsync(INFO);
 
             _messages.Add(message.Id, paginated);
+
+            return message;
         }
 
-        public async Task OnReactionAdded(ulong id, Optional<SocketUserMessage> messageParam, SocketReaction reaction)
+        internal async Task OnReactionAdded(ulong id, Optional<SocketUserMessage> messageParam, SocketReaction reaction)
         {
             PaginatedMessage page;
             var message = messageParam.GetValueOrDefault();

@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.0.0-ci-*",
+  "version": "1.1.0-ci-*",
   "packOptions": {
     "owners": [ "foxbot" ],
     "repository": {
@@ -7,7 +7,8 @@
       "url": "https://github.com/foxbot/Discord.Addons.Paginator"
     },
     "summary": "Paginate your command responses with Reactions",
-    "tags": [ "discord", "discord.net" ]
+    "tags": [ "discord", "discord.net" ],
+    "releaseNotes": "1.1.0 - added a 'language' parameter to SendPaginatedMessage, allows you to specify the formatting language for the code block."
   },
   "title": "Discord.Addons.Paginator",
   "authors": [ "foxbot" ],

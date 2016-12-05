@@ -33,9 +33,9 @@ namespace Discord.Addons.Paginator
         /// <param name="pages">A collection of pages to send to the channel. Each element in this collection represents one page.</param>
         /// <exception cref="Net.HttpException">Thrown if the bot user cannot send a message or add reactions.</exception>
         /// <returns>The paginated message.</returns>
-        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages)
+        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages, string language = "")
         {
-            var paginated = new PaginatedMessage(pages);
+            var paginated = new PaginatedMessage(pages, language);
 
             var message = await channel.SendMessageAsync(paginated.ToString());
 
@@ -98,17 +98,19 @@ namespace Discord.Addons.Paginator
 
     internal class PaginatedMessage
     {
-        internal PaginatedMessage(IReadOnlyCollection<string> pages)
+        internal PaginatedMessage(IReadOnlyCollection<string> pages, string language)
         {
             Pages = pages;
+            Language = language;
             CurrentPage = 1;
         }
 
         internal IReadOnlyCollection<string> Pages { get; }
+        internal string Language { get; }
         internal int CurrentPage { get; set; }
         internal int Count => Pages.Count;
 
-        public override string ToString() => string.Concat("```\n", Pages.ElementAtOrDefault(CurrentPage - 1), Suffix, "```");
+        public override string ToString() => string.Concat($"```{Language}\n", Pages.ElementAtOrDefault(CurrentPage - 1), Suffix, "```");
         internal string Suffix => $"\n\nPage {CurrentPage}/{Count}";
     }
 }

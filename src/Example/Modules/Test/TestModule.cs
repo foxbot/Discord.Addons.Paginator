@@ -31,7 +31,7 @@ namespace Example.Modules.Test
                 "abal! !!",
             };
 
-            await paginator.SendPaginatedMessage(Context.Channel, pages, "md");
+            await paginator.SendPaginatedMessage(Context.Channel, pages, Context.User, "md");
         }
     }
 }

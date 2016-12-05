@@ -31,11 +31,13 @@ namespace Discord.Addons.Paginator
         /// </summary>
         /// <param name="channel">The channel the message should be sent to.</param>
         /// <param name="pages">A collection of pages to send to the channel. Each element in this collection represents one page.</param>
+        /// <param name="user">If set, this limits the paginated message to only be accessible by a given user.</param>
+        /// <param name="language">If set, this highlights the code block the page is encapsulated in with the given language.</param>
         /// <exception cref="Net.HttpException">Thrown if the bot user cannot send a message or add reactions.</exception>
         /// <returns>The paginated message.</returns>
-        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages, string language = "")
+        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages, IUser user = null, string language = "")
         {
-            var paginated = new PaginatedMessage(pages, language);
+            var paginated = new PaginatedMessage(pages, user, language);
 
             var message = await channel.SendMessageAsync(paginated.ToString());
 
@@ -61,6 +63,11 @@ namespace Discord.Addons.Paginator
             if (_messages.TryGetValue(message.Id, out page))
             {
                 if (reaction.UserId == _client.CurrentUser.Id) return;
+                if (page.User != null && reaction.UserId != page.User.Id)
+                {
+                    var _ = message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
+                    return;
+                }
                 await message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
                 switch (reaction.Emoji.Name)
                 {
@@ -98,14 +105,16 @@ namespace Discord.Addons.Paginator
 
     internal class PaginatedMessage
     {
-        internal PaginatedMessage(IReadOnlyCollection<string> pages, string language)
+        internal PaginatedMessage(IReadOnlyCollection<string> pages, IUser user, string language)
         {
             Pages = pages;
             Language = language;
+            User = user;
             CurrentPage = 1;
         }
 
         internal IReadOnlyCollection<string> Pages { get; }
+        internal IUser User { get; }
         internal string Language { get; }
         internal int CurrentPage { get; set; }
         internal int Count => Pages.Count;

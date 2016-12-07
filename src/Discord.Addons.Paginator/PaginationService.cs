@@ -72,6 +72,7 @@ namespace Discord.Addons.Paginator
                 switch (reaction.Emoji.Name)
                 {
                     case FIRST:
+                        if (page.CurrentPage == 1) break;
                         page.CurrentPage = 1;
                         await message.ModifyAsync(x => x.Content = page.ToString());
                         break;
@@ -86,6 +87,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Content = page.ToString());
                         break;
                     case END:
+                        if (page.CurrentPage == page.Count) break;
                         page.CurrentPage = page.Count;
                         await message.ModifyAsync(x => x.Content = page.ToString());
                         break;

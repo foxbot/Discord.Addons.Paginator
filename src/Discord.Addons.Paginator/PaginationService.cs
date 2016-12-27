@@ -42,9 +42,13 @@ namespace Discord.Addons.Paginator
             var message = await channel.SendMessageAsync(paginated.ToString());
 
             await message.AddReactionAsync(FIRST);
+            await Task.Delay(1000);
             await message.AddReactionAsync(BACK);
+            await Task.Delay(1000);
             await message.AddReactionAsync(NEXT);
+            await Task.Delay(1000);
             await message.AddReactionAsync(END);
+            await Task.Delay(1000);
             //await message.AddReactionAsync(JUMP);
             await message.AddReactionAsync(STOP);
             //await message.AddReactionAsync(INFO);

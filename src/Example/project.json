@@ -9,8 +9,8 @@
       "type": "platform",
       "version": "1.0.0"
     },
-    "Discord.Net.WebSocket": "1.0.0-beta2-*",
-    "Discord.Net.Commands": "1.0.0-beta2-*",
+    "Discord.Net.WebSocket": "1.0.0-rc-*",
+    "Discord.Net.Commands": "1.0.0-rc-*",
     "Discord.Addons.Paginator": "1.0.0-*"
   },
 

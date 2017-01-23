@@ -6,6 +6,8 @@ using Discord;
 using Discord.Addons.Paginator;
 using Discord.Commands;
 using Discord.WebSocket;
+using Serilog;
+using Serilog.Events;
 
 namespace Example
 {
@@ -17,6 +19,12 @@ namespace Example
 
         public async Task Start()
         {
+            var log = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.ColoredConsole(outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] ({SourceContext}) {Message}{NewLine}{Exception}")
+                .CreateLogger();
+            Log.Logger = log;
+
             client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
@@ -26,7 +34,8 @@ namespace Example
 
             client.Log += (msg) =>
             {
-                Console.WriteLine(msg.ToString());
+                // (this is a bad example, don't copy this: )
+                Log.Write(LogEventLevel.Information, msg.ToString());
                 return Task.CompletedTask;
             };
 

@@ -11,7 +11,9 @@
     },
     "Discord.Net.WebSocket": "1.0.0-rc-*",
     "Discord.Net.Commands": "1.0.0-rc-*",
-    "Discord.Addons.Paginator": "1.0.0-*"
+    "Discord.Addons.Paginator": "1.0.0-*",
+    "Serilog": "2.3.0",
+    "Serilog.Sinks.ColoredConsole": "2.0.0",
   },
 
   "frameworks": {

@@ -2,8 +2,8 @@
 #addin "Cake.ExtendedNuGet"
 
 var MyGetKey = EnvironmentVariable("MYGET_KEY");
-//string BuildNumber = EnvironmentVariable("TRAVIS_BUILD_NUMBER");
-string BuildNumber = "5";
+string BuildNumber = EnvironmentVariable("TRAVIS_BUILD_NUMBER");
+string Branch = EnvironmentVariable("TRAVIS_BRANCH");
 
 Task("Restore")
     .Does(() =>
@@ -28,6 +28,7 @@ Task("Build")
     DotNetCoreBuild("./src/Example/");
 });
 Task("Deploy")
+    .WithCriteria(Branch == "master")
     .Does(() =>
 {
     var settings = new NuGetPushSettings

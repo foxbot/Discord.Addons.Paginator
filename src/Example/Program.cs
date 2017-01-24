@@ -20,7 +20,7 @@ namespace Example
         public async Task Start()
         {
             var log = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Verbose()
                 .WriteTo.ColoredConsole(outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] ({SourceContext}) {Message}{NewLine}{Exception}")
                 .CreateLogger();
             Log.Logger = log;

@@ -23,11 +23,11 @@ namespace Discord.Addons.Paginator
 
         public PaginationService(DiscordSocketClient client)
         {
-            Log.Debug("Creating new service");
+            Log.Trace("Creating new service");
             _messages = new Dictionary<ulong, PaginatedMessage>(); 
             _client = client;
             _client.ReactionAdded += OnReactionAdded;
-            Log.Debug("client.ReactionAdded hooked");
+            Log.Trace("client.ReactionAdded hooked");
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Discord.Addons.Paginator
             //await message.AddReactionAsync(INFO);
 
             _messages.Add(message.Id, paginated);
-            Log.DebugFormat("Listening to message with id {id}", message.Id);
+            Log.TraceFormat("Listening to message with id {id}", message.Id);
 
             return message;
         }
@@ -66,12 +66,12 @@ namespace Discord.Addons.Paginator
             var message = messageParam.GetValueOrDefault();
             if (message == null)
             {
-                Log.WarnFormat("Dumped message (not in cache) with id {id}", id);
+                Log.DebugFormat("Dumped message (not in cache) with id {id}", id);
                 return;
             }
             if (!reaction.User.IsSpecified)
             {
-                Log.WarnFormat("Dumped message (invalid user) with id {id}", id);
+                Log.DebugFormat("Dumped message (invalid user) with id {id}", id);
                 return;
             }
             if (_messages.TryGetValue(message.Id, out page))
@@ -84,7 +84,7 @@ namespace Discord.Addons.Paginator
                     return;
                 }
                 await message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
-                Log.DebugFormat("handling reaction {reaction}", reaction.Emoji.Name);
+                Log.DebugFormat("handling reaction {reaction}", reaction.Emoji);
                 switch (reaction.Emoji.Name)
                 {
                     case FIRST:

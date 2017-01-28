@@ -1,5 +1,4 @@
-﻿using Discord.Addons.Paginator.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,17 +16,20 @@ namespace Discord.Addons.Paginator
         const string STOP = "⏹";
         const string INFO = "ℹ";
 
-        private static readonly ILog Log = LogProvider.GetLogger("Addons/Paginator");
+        internal readonly Log Log = new Log("Paginator");
+        internal readonly Func<LogMessage, Task> WriteLog;
+
         private readonly Dictionary<ulong, PaginatedMessage> _messages;
         private readonly DiscordSocketClient _client;
 
-        public PaginationService(DiscordSocketClient client)
+        public PaginationService(DiscordSocketClient client, Func<LogMessage, Task> logger = null)
         {
-            Log.Trace("Creating new service");
+            WriteLog = logger ?? new Func<LogMessage, Task>((m) => Task.CompletedTask);
+            WriteLog(Log.Debug("Creating new service"));
             _messages = new Dictionary<ulong, PaginatedMessage>(); 
             _client = client;
             _client.ReactionAdded += OnReactionAdded;
-            Log.Trace("client.ReactionAdded hooked");
+            WriteLog(Log.Debug("client.ReactionAdded hooked"));
         }
 
         /// <summary>
@@ -41,7 +43,7 @@ namespace Discord.Addons.Paginator
         /// <returns>The paginated message.</returns>
         public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages, IUser user = null, string language = "")
         {
-            Log.InfoFormat("Sending message to {channel}", channel);
+            await WriteLog(Log.Info($"Sending message to {channel}"));
             var paginated = new PaginatedMessage(pages, user, language);
 
             var message = await channel.SendMessageAsync(paginated.ToString());
@@ -55,7 +57,7 @@ namespace Discord.Addons.Paginator
             //await message.AddReactionAsync(INFO);
 
             _messages.Add(message.Id, paginated);
-            Log.TraceFormat("Listening to message with id {id}", message.Id);
+            await WriteLog(Log.Debug("Listening to message with id {id}"));
 
             return message;
         }
@@ -66,12 +68,12 @@ namespace Discord.Addons.Paginator
             var message = messageParam.GetValueOrDefault();
             if (message == null)
             {
-                Log.DebugFormat("Dumped message (not in cache) with id {id}", id);
+                await WriteLog(Log.Verbose($"Dumped message (not in cache) with id {id}"));
                 return;
             }
             if (!reaction.User.IsSpecified)
             {
-                Log.DebugFormat("Dumped message (invalid user) with id {id}", id);
+                await WriteLog(Log.Verbose($"Dumped message (invalid user) with id {id}"));
                 return;
             }
             if (_messages.TryGetValue(message.Id, out page))
@@ -79,12 +81,12 @@ namespace Discord.Addons.Paginator
                 if (reaction.UserId == _client.CurrentUser.Id) return;
                 if (page.User != null && reaction.UserId != page.User.Id)
                 {
-                    Log.DebugFormat("ignoring reaction from user {user}", reaction.UserId);
+                    await WriteLog(Log.Verbose($"ignoring reaction from user {reaction.UserId}"));
                     var _ = message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
                     return;
                 }
                 await message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
-                Log.DebugFormat("handling reaction {reaction}", reaction.Emoji);
+                await WriteLog(Log.Verbose($"handling reaction {reaction.Emoji.Name}"));
                 switch (reaction.Emoji.Name)
                 {
                     case FIRST:

@@ -11,6 +11,4 @@ Credit for the original concept of paginating messages with reactions to [Rapptz
 
 ### Logging
 
-Paginator uses the [LibLog](https://github.com/loqu8/LibLog) logging abstraction to automatically hook in to whatever logging framework your bot uses.  
-
-You can use [Serilog](https://serilog.net/) (my preference), [NLog](http://nlog-project.org/), or your own framework. See the [LibLog Wiki](https://github.com/damianh/LibLog/wiki) for more information.
+Paginator uses the standard addon logging pattern. To enable logging, pass a `Func<LogMessage, Task>` into the constructor of `PaginatorService`, or `DiscordSocketClient.UsePaginator`.

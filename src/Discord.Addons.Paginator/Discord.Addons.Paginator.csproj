@@ -24,6 +24,9 @@
     <PackageReference Include="Discord.Net.WebSocket">
       <Version>1.0.0-rc-*</Version>
     </PackageReference>
+    <PackageReference Include="Discord.Net.Commands">
+      <Version>1.0.0-rc-*</Version>
+    </PackageReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>

@@ -5,7 +5,10 @@ namespace Discord.Addons.Paginator
     internal class Log
     {
         private readonly string source;
-        internal Log(string source) => this.source = source;
+        internal Log(string source)
+        {
+            this.source = source;
+        }
 
         public LogMessage Debug(string text, Exception e = null) =>
             new LogMessage(LogSeverity.Debug, source, text, e);

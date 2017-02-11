@@ -12,9 +12,7 @@ namespace Discord.Addons.Paginator
         const string BACK = "◀";
         const string NEXT = "▶";
         const string END = "⏭";
-        const string JUMP = "🔢";
         const string STOP = "⏹";
-        const string INFO = "ℹ";
 
         internal readonly Log Log = new Log("Paginator");
         internal readonly Func<LogMessage, Task> WriteLog;
@@ -35,26 +33,21 @@ namespace Discord.Addons.Paginator
         /// <summary>
         /// Sends a paginated message (with reaction buttons)
         /// </summary>
-        /// <param name="channel">The channel the message should be sent to.</param>
-        /// <param name="pages">A collection of pages to send to the channel. Each element in this collection represents one page.</param>
-        /// <param name="user">If set, this limits the paginated message to only be accessible by a given user.</param>
-        /// <param name="language">If set, this highlights the code block the page is encapsulated in with the given language.</param>
+        /// <param name="channel">The channel this message should be sent to</param>
+        /// <param name="paginated">A <see cref="PaginatedMessage">PaginatedMessage</see> containing the pages.</param>
         /// <exception cref="Net.HttpException">Thrown if the bot user cannot send a message or add reactions.</exception>
         /// <returns>The paginated message.</returns>
-        public async Task<IUserMessage> SendPaginatedMessage(IMessageChannel channel, IReadOnlyCollection<string> pages, IUser user = null, string language = "")
+        public async Task<IUserMessage> SendPaginatedMessageAsync(IMessageChannel channel, PaginatedMessage paginated)
         {
             await WriteLog(Log.Info($"Sending message to {channel}"));
-            var paginated = new PaginatedMessage(pages, user, language);
 
-            var message = await channel.SendMessageAsync(paginated.ToString());
+            var message = await channel.SendMessageAsync("", embed: paginated.GetEmbed());
 
             await message.AddReactionAsync(FIRST);
             await message.AddReactionAsync(BACK);
             await message.AddReactionAsync(NEXT);
             await message.AddReactionAsync(END);
-            //await message.AddReactionAsync(JUMP);
             await message.AddReactionAsync(STOP);
-            //await message.AddReactionAsync(INFO);
 
             _messages.Add(message.Id, paginated);
             await WriteLog(Log.Debug("Listening to message with id {id}"));
@@ -64,7 +57,6 @@ namespace Discord.Addons.Paginator
 
         internal async Task OnReactionAdded(ulong id, Optional<SocketUserMessage> messageParam, SocketReaction reaction)
         {
-            PaginatedMessage page;
             var message = messageParam.GetValueOrDefault();
             if (message == null)
             {
@@ -76,7 +68,7 @@ namespace Discord.Addons.Paginator
                 await WriteLog(Log.Verbose($"Dumped message (invalid user) with id {id}"));
                 return;
             }
-            if (_messages.TryGetValue(message.Id, out page))
+            if (_messages.TryGetValue(message.Id, out PaginatedMessage page))
             {
                 if (reaction.UserId == _client.CurrentUser.Id) return;
                 if (page.User != null && reaction.UserId != page.User.Id)
@@ -92,30 +84,27 @@ namespace Discord.Addons.Paginator
                     case FIRST:
                         if (page.CurrentPage == 1) break;
                         page.CurrentPage = 1;
-                        await message.ModifyAsync(x => x.Content = page.ToString());
+                        await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                         break;
                     case BACK:
                         if (page.CurrentPage == 1) break;
                         page.CurrentPage--;
-                        await message.ModifyAsync(x => x.Content = page.ToString());
+                        await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                         break;
                     case NEXT:
                         if (page.CurrentPage == page.Count) break;
                         page.CurrentPage++;
-                        await message.ModifyAsync(x => x.Content = page.ToString());
+                        await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                         break;
                     case END:
                         if (page.CurrentPage == page.Count) break;
                         page.CurrentPage = page.Count;
-                        await message.ModifyAsync(x => x.Content = page.ToString());
-                        break;
-                    case JUMP:
+                        await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                         break;
                     case STOP:
                         await message.DeleteAsync();
                         _messages.Remove(message.Id);
                         return;
-                    case INFO:
                     default:
                         break;
                 }
@@ -123,23 +112,35 @@ namespace Discord.Addons.Paginator
         }
     }
 
-    internal class PaginatedMessage
+    public class PaginatedMessage
     {
-        internal PaginatedMessage(IReadOnlyCollection<string> pages, IUser user, string language)
+        public PaginatedMessage(IReadOnlyCollection<string> pages, string title = "", Color? embedColor = null, IUser user = null)
         {
             Pages = pages;
-            Language = language;
+            Title = title;
+            EmbedColor = embedColor ?? Color.Default;
             User = user;
             CurrentPage = 1;
         }
 
+        internal Embed GetEmbed()
+        {
+            return new EmbedBuilder()
+                .WithColor(EmbedColor)
+                .WithTitle(Title)
+                .WithDescription(Pages.ElementAtOrDefault(CurrentPage - 1) ?? "")
+                .WithFooter(footer =>
+                {
+                    footer.Text = $"Page {CurrentPage}/{Count}";
+                })
+                .Build();
+        }
+
+        internal string Title { get; }
+        internal Color EmbedColor { get; } 
         internal IReadOnlyCollection<string> Pages { get; }
         internal IUser User { get; }
-        internal string Language { get; }
         internal int CurrentPage { get; set; }
         internal int Count => Pages.Count;
-
-        public override string ToString() => string.Concat($"```{Language}\n", Pages.ElementAtOrDefault(CurrentPage - 1), Suffix, "```");
-        internal string Suffix => $"\n\nPage {CurrentPage}/{Count}";
     }
 }

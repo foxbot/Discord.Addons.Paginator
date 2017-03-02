@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,7 +22,7 @@ namespace Discord.Addons.Paginator
 
         public PaginationService(DiscordSocketClient client, Func<LogMessage, Task> logger = null)
         {
-            WriteLog = logger ?? new Func<LogMessage, Task>((m) => Task.CompletedTask);
+            WriteLog = logger ?? (m => Task.CompletedTask);
             WriteLog(Log.Debug("Creating new service"));
             _messages = new Dictionary<ulong, PaginatedMessage>(); 
             _client = client;
@@ -55,17 +55,17 @@ namespace Discord.Addons.Paginator
             return message;
         }
 
-        internal async Task OnReactionAdded(ulong id, Optional<SocketUserMessage> messageParam, SocketReaction reaction)
+        internal async Task OnReactionAdded(Cacheable<IUserMessage, ulong> messageParam, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            var message = messageParam.GetValueOrDefault();
+            var message = messageParam.Value;
             if (message == null)
             {
-                await WriteLog(Log.Verbose($"Dumped message (not in cache) with id {id}"));
+                await WriteLog(Log.Verbose($"Dumped message (not in cache) with id {reaction.MessageId}"));
                 return;
             }
             if (!reaction.User.IsSpecified)
             {
-                await WriteLog(Log.Verbose($"Dumped message (invalid user) with id {id}"));
+                await WriteLog(Log.Verbose($"Dumped message (invalid user) with id {message.Id}"));
                 return;
             }
             if (_messages.TryGetValue(message.Id, out PaginatedMessage page))

@@ -25,7 +25,7 @@ namespace Example
             client.Log += Log;
 
             await client.LoginAsync(TokenType.Bot, token);
-            await client.ConnectAsync();
+            await client.StartAsync();
 
             var map = new DependencyMap();
             ConfigureServices(map);

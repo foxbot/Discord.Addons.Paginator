@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,7 +57,7 @@ namespace Discord.Addons.Paginator
 
         internal async Task OnReactionAdded(Cacheable<IUserMessage, ulong> messageParam, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            var message = messageParam.Value;
+            var message = await messageParam.GetOrDownloadAsync();
             if (message == null)
             {
                 await WriteLog(Log.Verbose($"Dumped message (not in cache) with id {reaction.MessageId}"));

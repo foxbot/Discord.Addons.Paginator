@@ -1,3 +1,6 @@
+### New in 2.1.0 (Released 2017/03/07)
+* Updated to latest version of Discord.Net RC (cacheable update)
+
 ### New in 2.0.0 (Released 2017/01/03)
 * Paginated messages now take the form of embeds
 * `SendPaginatedMessage` has been renamed to `SendPaginatedMessageAsync`

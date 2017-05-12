@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace Discord.Addons.Paginator
 {
@@ -43,11 +43,11 @@ namespace Discord.Addons.Paginator
 
             var message = await channel.SendMessageAsync("", embed: paginated.GetEmbed());
 
-            await message.AddReactionAsync(FIRST);
-            await message.AddReactionAsync(BACK);
-            await message.AddReactionAsync(NEXT);
-            await message.AddReactionAsync(END);
-            await message.AddReactionAsync(STOP);
+            await message.AddReactionAsync(new Emoji(FIRST));
+            await message.AddReactionAsync(new Emoji(BACK));
+            await message.AddReactionAsync(new Emoji(NEXT));
+            await message.AddReactionAsync(new Emoji(END));
+            await message.AddReactionAsync(new Emoji(STOP));
 
             _messages.Add(message.Id, paginated);
             await WriteLog(Log.Debug("Listening to message with id {id}"));
@@ -74,12 +74,12 @@ namespace Discord.Addons.Paginator
                 if (page.User != null && reaction.UserId != page.User.Id)
                 {
                     await WriteLog(Log.Verbose($"ignoring reaction from user {reaction.UserId}"));
-                    var _ = message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
+                    var _ = message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                     return;
                 }
-                await message.RemoveReactionAsync(reaction.Emoji.Name, reaction.User.Value);
-                await WriteLog(Log.Verbose($"handling reaction {reaction.Emoji.Name}"));
-                switch (reaction.Emoji.Name)
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                await WriteLog(Log.Verbose($"handling reaction {reaction.Emote}"));
+                switch (reaction.Emote.Name)
                 {
                     case FIRST:
                         if (page.CurrentPage == 1) break;

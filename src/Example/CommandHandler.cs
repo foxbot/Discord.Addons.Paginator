@@ -1,5 +1,7 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -9,16 +11,15 @@ namespace Example
     {
         private CommandService _commands;
         private DiscordSocketClient _client;
-        private IDependencyMap _map;
+        private IServiceProvider _provider;
 
-        public async Task Install(IDependencyMap map)
+        public async Task Install(IServiceProvider provider)
         {
             _commands = new CommandService();
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
-            map.Add(_commands);
 
-            _map = map;
-            _client = map.Get<DiscordSocketClient>();
+            _provider = provider;
+            _client = provider.GetService<DiscordSocketClient>();
 
             _client.MessageReceived += HandleCommand;
         }
@@ -32,7 +33,7 @@ namespace Example
             if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix("p~>", ref argPos))) return;
 
             var context = new CommandContext(_client, message);
-            var result = await _commands.ExecuteAsync(context, argPos, _map);
+            var result = await _commands.ExecuteAsync(context, argPos, _provider);
             if (!result.IsSuccess)
                 await message.Channel.SendMessageAsync($"**Error:** {result.ErrorReason}");
         }

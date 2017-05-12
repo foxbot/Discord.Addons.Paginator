@@ -1,3 +1,8 @@
+### New in 2.2.0 (Released 2017/05/12)
+* Use Discord.Net RC3
+* Add extension methods to use IServiceCollection
+* Deprecated `DiscordSocketClient#UsePaginator`
+
 ### New in 2.1.1 (Released 2017/03/07)
 * Sample bot should now conform to the latest version of Discord.Net RC
 

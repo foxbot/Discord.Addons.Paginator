@@ -1,9 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Addons.Paginator;
-using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 
 namespace Example
 {
@@ -27,17 +27,18 @@ namespace Example
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
 
-            var map = new DependencyMap();
-            ConfigureServices(map);
-            await new CommandHandler().Install(map);
+            var services = ConfigureServices();
+            await new CommandHandler().Install(services);
 
             await Task.Delay(-1);
         }
 
-        public void ConfigureServices(IDependencyMap map)
+        public IServiceProvider ConfigureServices()
         {
-            map.Add(client);
-            client.UsePaginator(map, Log);
+            var services = new ServiceCollection()
+                .AddSingleton(client)
+                .AddPaginator(client, Log);
+            return services.BuildServiceProvider();
         }
 
         private Task Log(LogMessage msg)

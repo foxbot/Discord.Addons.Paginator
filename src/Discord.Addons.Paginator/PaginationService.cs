@@ -116,7 +116,48 @@ namespace Discord.Addons.Paginator
     {
         public PaginatedMessage(IReadOnlyCollection<string> pages, string title = "", Color? embedColor = null, IUser user = null)
         {
-            Pages = pages;
+            List<Embed> _pages = new List<Embed>();
+            int i = 1;
+            foreach (string page in pages)
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(EmbedColor)
+                .WithTitle(Title)
+                .WithDescription(page ?? "")
+                .WithFooter(footer =>
+                {
+                    footer.Text = $"Page {i++}/{pages.Count}";
+                });
+                _pages.Add(embed.Build());
+            }
+            Pages = _pages;
+            Title = title;
+            EmbedColor = embedColor ?? Color.Default;
+            User = user;
+            CurrentPage = 1;
+        }
+        public PaginatedMessage(IReadOnlyCollection<PageBuilder> pages, string title = "", Color? embedColor = null, IUser user = null)
+        {
+            List<Embed> _pages = new List<Embed>();
+            int i = 1;
+            foreach (PageBuilder page in pages)
+            {
+                EmbedBuilder embed = new EmbedBuilder()
+                .WithColor(EmbedColor)
+                .WithTitle(Title)
+                .WithDescription(page?.Description ?? "")
+                .WithImageUrl(page?.ImageUrl ?? "")
+                .WithThumbnailUrl(page?.ThumbnailUrl ?? "")
+                .WithFooter(footer =>
+                {
+                    footer.Text = $"Page {i++}/{pages.Count}";
+                });
+                if (page.Fields != null)
+                    foreach (EmbedFieldBuilder field in page.Fields)
+                        embed.AddField(field);
+                _pages.Add(embed.Build());
+            }
+            Pages = _pages;
             Title = title;
             EmbedColor = embedColor ?? Color.Default;
             User = user;
@@ -125,22 +166,46 @@ namespace Discord.Addons.Paginator
 
         internal Embed GetEmbed()
         {
-            return new EmbedBuilder()
-                .WithColor(EmbedColor)
-                .WithTitle(Title)
-                .WithDescription(Pages.ElementAtOrDefault(CurrentPage - 1) ?? "")
-                .WithFooter(footer =>
-                {
-                    footer.Text = $"Page {CurrentPage}/{Count}";
-                })
-                .Build();
+            return Pages.ElementAtOrDefault(CurrentPage - 1);
         }
 
         internal string Title { get; }
-        internal Color EmbedColor { get; } 
-        internal IReadOnlyCollection<string> Pages { get; }
+        internal Color EmbedColor { get; }
+        internal IReadOnlyCollection<Embed> Pages { get; }
         internal IUser User { get; }
         internal int CurrentPage { get; set; }
         internal int Count => Pages.Count;
+    }
+
+    public class PageBuilder
+    {
+        public string Description { get; set; }
+        public IReadOnlyCollection<EmbedFieldBuilder> Fields { get; set; }
+        public string ImageUrl { get; set; }
+        public string ThumbnailUrl { get; set; }
+
+        public PageBuilder WithDescription(string description)
+        {
+            Description = description;
+            return this;
+        }
+
+        public PageBuilder WithFields(IReadOnlyCollection<EmbedFieldBuilder> fields)
+        {
+            Fields = fields;
+            return this;
+        }
+
+        public PageBuilder WithImageUrl(string imageUrl)
+        {
+            ImageUrl = imageUrl;
+            return this;
+        }
+
+        public PageBuilder WithThumbnailUrl(string thumbnailUrl)
+        {
+            ThumbnailUrl = thumbnailUrl;
+            return this;
+        }
     }
 }

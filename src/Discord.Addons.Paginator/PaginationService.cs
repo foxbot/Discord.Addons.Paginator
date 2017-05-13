@@ -121,8 +121,8 @@ namespace Discord.Addons.Paginator
             foreach (string page in pages)
             {
                 EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(EmbedColor)
-                .WithTitle(Title)
+                .WithColor(embedColor ?? Color.Default)
+                .WithTitle(title)
                 .WithDescription(page ?? "")
                 .WithFooter(footer =>
                 {
@@ -143,8 +143,8 @@ namespace Discord.Addons.Paginator
             foreach (PageBuilder page in pages)
             {
                 EmbedBuilder embed = new EmbedBuilder()
-                .WithColor(EmbedColor)
-                .WithTitle(Title)
+                .WithColor(embedColor ?? Color.Default)
+                .WithTitle(title)
                 .WithDescription(page?.Description ?? "")
                 .WithImageUrl(page?.ImageUrl ?? "")
                 .WithThumbnailUrl(page?.ThumbnailUrl ?? "")

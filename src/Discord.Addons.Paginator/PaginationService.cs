@@ -2,18 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Discord.Addons.Paginator
 {
     public class PaginationService
     {
-        const string FIRST = "⏮";
-        const string BACK = "◀";
-        const string NEXT = "▶";
-        const string END = "⏭";
-        const string STOP = "⏹";
-
         internal readonly Log Log = new Log("Paginator");
         internal readonly Func<LogMessage, Task> WriteLog;
 
@@ -43,16 +38,29 @@ namespace Discord.Addons.Paginator
 
             var message = await channel.SendMessageAsync("", embed: paginated.GetEmbed());
 
-            await message.AddReactionAsync(new Emoji(FIRST));
-            await message.AddReactionAsync(new Emoji(BACK));
-            await message.AddReactionAsync(new Emoji(NEXT));
-            await message.AddReactionAsync(new Emoji(END));
-            await message.AddReactionAsync(new Emoji(STOP));
+            await message.AddReactionAsync(paginated.Options.EmoteFirst);
+            await message.AddReactionAsync(paginated.Options.EmoteBack);
+            await message.AddReactionAsync(paginated.Options.EmoteNext);
+            await message.AddReactionAsync(paginated.Options.EmoteLast);
+            await message.AddReactionAsync(paginated.Options.EmoteStop);
 
             _messages.Add(message.Id, paginated);
             await WriteLog(Log.Debug("Listening to message with id {id}"));
 
+            if (paginated.Options.Timeout != TimeSpan.Zero)
+                paginated.TimeoutTimer = new Timer(RemoveMessageFromList, Tuple.Create(message, paginated.Options.TimeoutAction), (int)paginated.Options.Timeout.TotalMilliseconds, Timeout.Infinite);
+
             return message;
+        }
+
+        private async void RemoveMessageFromList(object state)
+        {
+            var tuple = (Tuple<IUserMessage, PageStopAction>)state;
+            if (tuple.Item2 == PageStopAction.DeleteMessage)
+                await tuple.Item1.DeleteAsync();
+            else if (tuple.Item2 == PageStopAction.StopListeningAndDeleteReactions)
+                await tuple.Item1.RemoveAllReactionsAsync();
+            _messages.Remove(tuple.Item1.Id);
         }
 
         internal async Task OnReactionAdded(Cacheable<IUserMessage, ulong> messageParam, ISocketMessageChannel channel, SocketReaction reaction)
@@ -79,34 +87,47 @@ namespace Discord.Addons.Paginator
                 }
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Verbose($"handling reaction {reaction.Emote}"));
-                switch (reaction.Emote.Name)
+                if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
                 {
-                    case FIRST:
-                        if (page.CurrentPage == 1) break;
+                    if (page.CurrentPage != 1)
+                    {
                         page.CurrentPage = 1;
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
-                        break;
-                    case BACK:
-                        if (page.CurrentPage == 1) break;
+                    }
+                }
+                else if (reaction.Emote.Name == page.Options.EmoteBack.Name)
+                {
+                    if (page.CurrentPage != 1)
+                    {
                         page.CurrentPage--;
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
-                        break;
-                    case NEXT:
-                        if (page.CurrentPage == page.Count) break;
+                    }
+                }
+                else if (reaction.Emote.Name == page.Options.EmoteNext.Name)
+                {
+                    if (page.CurrentPage != page.Count)
+                    {
                         page.CurrentPage++;
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
-                        break;
-                    case END:
-                        if (page.CurrentPage == page.Count) break;
+                    }
+                }
+                else if (reaction.Emote.Name == page.Options.EmoteLast.Name)
+                {
+                    if (page.CurrentPage != page.Count)
+                    {
                         page.CurrentPage = page.Count;
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
-                        break;
-                    case STOP:
+                    }
+                }
+                else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
+                {
+                    if (page.Options.EmoteStopAction == PageStopAction.DeleteMessage)
                         await message.DeleteAsync();
-                        _messages.Remove(message.Id);
-                        return;
-                    default:
-                        break;
+                    else if (page.Options.EmoteStopAction == PageStopAction.StopListeningAndDeleteReactions)
+                        await message.RemoveAllReactionsAsync();
+                    _messages.Remove(message.Id);
+                    if (page.TimeoutTimer != null)
+                        page.TimeoutTimer.Dispose();
                 }
             }
         }
@@ -114,7 +135,7 @@ namespace Discord.Addons.Paginator
 
     public class PaginatedMessage
     {
-        public PaginatedMessage(IReadOnlyCollection<string> pages, string title = "", Color? embedColor = null, IUser user = null)
+        public PaginatedMessage(IReadOnlyCollection<string> pages, string title = "", Color? embedColor = null, IUser user = null, PaginatedMessageOptions options = null)
         {
             List<Embed> _pages = new List<Embed>();
             int i = 1;
@@ -134,9 +155,10 @@ namespace Discord.Addons.Paginator
             Title = title;
             EmbedColor = embedColor ?? Color.Default;
             User = user;
+            Options = options ?? new PaginatedMessageOptions();
             CurrentPage = 1;
         }
-        public PaginatedMessage(IReadOnlyCollection<PageBuilder> pages, string title = "", Color? embedColor = null, IUser user = null)
+        public PaginatedMessage(IReadOnlyCollection<PageBuilder> pages, string title = "", Color? embedColor = null, IUser user = null, PaginatedMessageOptions options = null)
         {
             List<Embed> _pages = new List<Embed>();
             int i = 1;
@@ -161,6 +183,7 @@ namespace Discord.Addons.Paginator
             Title = title;
             EmbedColor = embedColor ?? Color.Default;
             User = user;
+            Options = options ?? new PaginatedMessageOptions();
             CurrentPage = 1;
         }
 
@@ -173,8 +196,35 @@ namespace Discord.Addons.Paginator
         internal Color EmbedColor { get; }
         internal IReadOnlyCollection<Embed> Pages { get; }
         internal IUser User { get; }
+        internal PaginatedMessageOptions Options { get; }
         internal int CurrentPage { get; set; }
         internal int Count => Pages.Count;
+        internal Timer TimeoutTimer { get; set; }
+    }
+
+    public class PaginatedMessageOptions
+    {
+        const string FIRST = "⏮";
+        const string BACK = "◀";
+        const string NEXT = "▶";
+        const string LAST = "⏭";
+        const string STOP = "⏹";
+
+        public IEmote EmoteFirst { get; set; } = new Emoji(FIRST);
+        public IEmote EmoteBack { get; set; } = new Emoji(BACK);
+        public IEmote EmoteNext { get; set; } = new Emoji(NEXT);
+        public IEmote EmoteLast { get; set; } = new Emoji(LAST);
+        public IEmote EmoteStop { get; set; } = new Emoji(STOP);
+        public PageStopAction EmoteStopAction { get; set; } = PageStopAction.DeleteMessage;
+        public TimeSpan Timeout { get; set; } = TimeSpan.Zero;
+        public PageStopAction TimeoutAction { get; set; } = PageStopAction.DeleteMessage;
+    }
+
+    public enum PageStopAction
+    {
+        DeleteMessage,
+        StopListening,
+        StopListeningAndDeleteReactions
     }
 
     public class PageBuilder

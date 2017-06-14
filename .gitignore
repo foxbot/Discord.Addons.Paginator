@@ -246,3 +246,6 @@ ModelManifest.xml
 
 # CakeBuild
 tools/**
+\.idea/\.idea\.Discord\.Addons\.Paginator/\.idea/
+
+\.idea/\.idea\.Discord\.Addons\.Paginator/riderModule\.iml

@@ -1,3 +1,6 @@
+### New in 2.3.0 (Released 2017/06/14)
+* Added more versatile config options to the appearance and behavior of paginated messages
+
 ### New in 2.2.0 (Released 2017/05/12)
 * Use Discord.Net RC3
 * Add extension methods to use IServiceCollection

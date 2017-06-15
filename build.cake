@@ -1,4 +1,4 @@
-#addin nuget:?package=NuGet.Core&version=2.12.0
+#addin nuget:?package=NuGet.Core&version=2.14.0
 #addin "Cake.ExtendedNuGet"
 
 var MyGetKey = EnvironmentVariable("MYGET_KEY");

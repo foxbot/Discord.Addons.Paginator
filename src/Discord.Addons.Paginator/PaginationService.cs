@@ -48,19 +48,22 @@ namespace Discord.Addons.Paginator
             await WriteLog(Log.Debug("Listening to message with id {id}"));
 
             if (paginated.Options.Timeout != TimeSpan.Zero)
-                paginated.TimeoutTimer = new Timer(RemoveMessageFromList, Tuple.Create(message, paginated.Options.TimeoutAction), (int)paginated.Options.Timeout.TotalMilliseconds, Timeout.Infinite);
+                paginated.TimeoutTimer = new Timer(RemoveMessageFromList, Tuple.Create(channel, message.Id, paginated.Options.TimeoutAction), (int)paginated.Options.Timeout.TotalMilliseconds, Timeout.Infinite);
 
             return message;
         }
 
         private async void RemoveMessageFromList(object state)
         {
-            var tuple = (Tuple<IUserMessage, PageStopAction>)state;
-            if (tuple.Item2 == PageStopAction.DeleteMessage)
-                await tuple.Item1.DeleteAsync();
-            else if (tuple.Item2 == PageStopAction.StopListeningAndDeleteReactions)
-                await tuple.Item1.RemoveAllReactionsAsync();
-            _messages.Remove(tuple.Item1.Id);
+            var tuple = (Tuple<IMessageChannel, ulong, PageStopAction>)state;
+            if (await tuple.Item1.GetMessageAsync(tuple.Item2) is IUserMessage message)
+            {
+                if (tuple.Item3 == PageStopAction.DeleteMessage)
+                    await message.DeleteAsync();
+                else if (tuple.Item3 == PageStopAction.StopListeningAndDeleteReactions)
+                    await message.RemoveAllReactionsAsync();
+            }
+            _messages.Remove(tuple.Item2);
         }
 
         internal async Task OnReactionAdded(Cacheable<IUserMessage, ulong> messageParam, ISocketMessageChannel channel, SocketReaction reaction)
@@ -87,7 +90,7 @@ namespace Discord.Addons.Paginator
                 }
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Verbose($"handling reaction {reaction.Emote}"));
-                if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
+                if (CompareIEmotes(reaction.Emote, page.Options.EmoteFirst))
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -95,7 +98,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteBack.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteBack))
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -103,7 +106,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteNext.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteNext))
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -111,7 +114,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteLast.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteLast))
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -119,7 +122,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteStop))
                 {
                     if (page.Options.EmoteStopAction == PageStopAction.DeleteMessage)
                         await message.DeleteAsync();
@@ -130,6 +133,15 @@ namespace Discord.Addons.Paginator
                         page.TimeoutTimer.Dispose();
                 }
             }
+        }
+
+        internal bool CompareIEmotes(IEmote first, IEmote second)
+        {
+            if (first is Emoji emojiFirst && second is Emoji emojiSecond)
+                return emojiFirst.Name == emojiSecond.Name;
+            if (first is Emote emoteFirst && second is Emote emoteSecond)
+                return emoteFirst.Id == emoteSecond.Id;
+            return false;
         }
     }
 

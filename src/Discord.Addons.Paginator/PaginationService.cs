@@ -52,10 +52,13 @@ namespace Discord.Addons.Paginator
                 var _ = Task.Delay(paginated.Options.Timeout).ContinueWith(async _t =>
                 {
                     if (!_messages.ContainsKey(message.Id)) return;
-                    if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
-                        await message.DeleteAsync();
-                    else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
-                        await message.RemoveAllReactionsAsync();
+                    if (await channel.GetMessageAsync(message.Id) != null)
+                    {
+                        if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
+                            await message.DeleteAsync();
+                        else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
+                            await message.RemoveAllReactionsAsync();
+                    }
                     _messages.Remove(message.Id);
                 });
             }
@@ -87,7 +90,7 @@ namespace Discord.Addons.Paginator
                 }
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Debug($"Handled reaction {reaction.Emote} from user {reaction.UserId}"));
-                if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
+                if (CompareIEmotes(reaction.Emote, page.Options.EmoteFirst))
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -95,7 +98,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteBack.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteBack))
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -103,7 +106,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteNext.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteNext))
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -111,7 +114,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteLast.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteLast))
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -119,7 +122,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
+                else if (CompareIEmotes(reaction.Emote, page.Options.EmoteStop))
                 {
                     if (page.Options.EmoteStopAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();
@@ -129,7 +132,16 @@ namespace Discord.Addons.Paginator
                 }
             }
         }
-    }
+
+        internal bool CompareIEmotes(IEmote first, IEmote second)
+        {
+            if (first is Emoji emojiFirst && second is Emoji emojiSecond)
+                return emojiFirst.Name == emojiSecond.Name;
+            if (first is Emote emoteFirst && second is Emote emoteSecond)
+                return emoteFirst.Id == emoteSecond.Id;
+            return false;
+        }
+}
 
     public class PaginatedMessage
     {

@@ -52,13 +52,10 @@ namespace Discord.Addons.Paginator
                 var _ = Task.Delay(paginated.Options.Timeout).ContinueWith(async _t =>
                 {
                     if (!_messages.ContainsKey(message.Id)) return;
-                    if (await channel.GetMessageAsync(message.Id) != null)
-                    {
-                        if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
-                            await message.DeleteAsync();
-                        else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
-                            await message.RemoveAllReactionsAsync();
-                    }
+                    if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
+                        await message.DeleteAsync();
+                    else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
+                        await message.RemoveAllReactionsAsync();
                     _messages.Remove(message.Id);
                 });
             }

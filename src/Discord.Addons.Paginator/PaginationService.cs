@@ -87,7 +87,7 @@ namespace Discord.Addons.Paginator
                 }
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Debug($"Handled reaction {reaction.Emote} from user {reaction.UserId}"));
-                if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
+                if (reaction.Emote.ToString() == page.Options.EmoteFirst.ToString())
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -95,7 +95,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteBack.Name)
+                else if (reaction.Emote.ToString() == page.Options.EmoteBack.ToString())
                 {
                     if (page.CurrentPage != 1)
                     {
@@ -103,7 +103,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteNext.Name)
+                else if (reaction.Emote.ToString() == page.Options.EmoteNext.ToString())
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -111,7 +111,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteLast.Name)
+                else if (reaction.Emote.ToString() == page.Options.EmoteLast.ToString())
                 {
                     if (page.CurrentPage != page.Count)
                     {
@@ -119,7 +119,7 @@ namespace Discord.Addons.Paginator
                         await message.ModifyAsync(x => x.Embed = page.GetEmbed());
                     }
                 }
-                else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
+                else if (reaction.Emote.ToString() == page.Options.EmoteStop.ToString())
                 {
                     if (page.Options.EmoteStopAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();

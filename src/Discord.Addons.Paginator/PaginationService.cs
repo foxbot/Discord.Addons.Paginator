@@ -85,7 +85,6 @@ namespace Discord.Addons.Paginator
                     var _ = message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                     return;
                 }
-                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Debug($"Handled reaction {reaction.Emote} from user {reaction.UserId}"));
                 if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
                 {
@@ -127,6 +126,7 @@ namespace Discord.Addons.Paginator
                         await message.RemoveAllReactionsAsync();
                     _messages.Remove(message.Id);
                 }
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
         }
     }

@@ -52,11 +52,11 @@ namespace Discord.Addons.Paginator
                 var _ = Task.Delay(paginated.Options.Timeout).ContinueWith(async _t =>
                 {
                     if (!_messages.ContainsKey(message.Id)) return;
+                    _messages.Remove(message.Id);
                     if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();
                     else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
                         await message.RemoveAllReactionsAsync();
-                    _messages.Remove(message.Id);
                 });
             }
 
@@ -120,11 +120,11 @@ namespace Discord.Addons.Paginator
                 }
                 else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
                 {
+                    _messages.Remove(message.Id);
                     if (page.Options.EmoteStopAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();
                     else if (page.Options.EmoteStopAction == StopAction.ClearReactions)
                         await message.RemoveAllReactionsAsync();
-                    _messages.Remove(message.Id);
                 }
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }

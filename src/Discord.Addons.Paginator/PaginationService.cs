@@ -151,7 +151,7 @@ namespace Discord.Addons.Paginator
                     {
                         footer.Text = $"Page {i++}/{pages.Count()}";
                     });
-                builder.Fields = page.Fields?.ToList();
+                builder.Fields = page?.Fields?.ToList() ?? new List<EmbedFieldBuilder>();
                 embeds.Add(builder.Build());
             }
             Pages = embeds;

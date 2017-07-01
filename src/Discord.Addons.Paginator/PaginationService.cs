@@ -134,7 +134,9 @@ namespace Discord.Addons.Paginator
     public class PaginatedMessage
     {
         public PaginatedMessage(IEnumerable<string> pages, string title = "", Color? embedColor = null, IUser user = null, AppearanceOptions options = null)
-            => new PaginatedMessage(pages.Select(x => new Page { Description = x }), title, embedColor, user, options);
+            : this(pages.Select(x => new Page { Description = x }), title, embedColor, user, options)
+        {
+        }
         public PaginatedMessage(IEnumerable<Page> pages, string title = "", Color? embedColor = null, IUser user = null, AppearanceOptions options = null)
         {
             var embeds = new List<Embed>();

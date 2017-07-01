@@ -52,11 +52,11 @@ namespace Discord.Addons.Paginator
                 var _ = Task.Delay(paginated.Options.Timeout).ContinueWith(async _t =>
                 {
                     if (!_messages.ContainsKey(message.Id)) return;
+                    _messages.Remove(message.Id);
                     if (paginated.Options.TimeoutAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();
                     else if (paginated.Options.TimeoutAction == StopAction.ClearReactions)
                         await message.RemoveAllReactionsAsync();
-                    _messages.Remove(message.Id);
                 });
             }
 
@@ -85,7 +85,6 @@ namespace Discord.Addons.Paginator
                     var _ = message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                     return;
                 }
-                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                 await WriteLog(Log.Debug($"Handled reaction {reaction.Emote} from user {reaction.UserId}"));
                 if (reaction.Emote.Name == page.Options.EmoteFirst.Name)
                 {
@@ -121,12 +120,13 @@ namespace Discord.Addons.Paginator
                 }
                 else if (reaction.Emote.Name == page.Options.EmoteStop.Name)
                 {
+                    _messages.Remove(message.Id);
                     if (page.Options.EmoteStopAction == StopAction.DeleteMessage)
                         await message.DeleteAsync();
                     else if (page.Options.EmoteStopAction == StopAction.ClearReactions)
                         await message.RemoveAllReactionsAsync();
-                    _messages.Remove(message.Id);
                 }
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
         }
     }
